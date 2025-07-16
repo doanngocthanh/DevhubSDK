@@ -46,7 +46,7 @@ jobs:
         name: jar-files
         path: target/*.jar
 
-  # Publish to GitHub Packages (cho SNAPSHOT versions)
+  # Publish to GitHub Packages ONLY (SNAPSHOT versions)
   publish-github:
     needs: build
     runs-on: ubuntu-latest
@@ -77,16 +77,16 @@ jobs:
         mvn versions:set -DnewVersion=1.0.0-SNAPSHOT
         mvn versions:commit
 
-    - name: Publish SNAPSHOT to GitHub Packages
-      run: mvn clean deploy -DskipTests -s $GITHUB_WORKSPACE/.github/settings.xml
+    - name: Publish SNAPSHOT to GitHub Packages ONLY
+      run: mvn clean deploy -DskipTests -Pgithub-packages -s $GITHUB_WORKSPACE/.github/settings.xml
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Publish to Maven Central (chỉ khi release)
+  # Publish to Maven Central ONLY (Release versions)
   publish-central:
     needs: build
     runs-on: ubuntu-latest
-    if: github.event_name == 'release'
+    if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: read
 
@@ -111,13 +111,13 @@ jobs:
       id: get_version
       run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-    - name: Set release version
+    - name: Set release version (NO SNAPSHOT)
       run: |
         mvn versions:set -DnewVersion=${{ steps.get_version.outputs.VERSION }}
         mvn versions:commit
 
-    - name: Build and publish to Maven Central
-      run: mvn clean deploy -DskipTests -s $GITHUB_WORKSPACE/.github/settings.xml
+    - name: Build and publish to Maven Central ONLY
+      run: mvn clean deploy -DskipTests -Pmaven-central -s $GITHUB_WORKSPACE/.github/settings.xml
       env:
         CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
         CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}

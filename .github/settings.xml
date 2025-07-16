@@ -12,34 +12,11 @@
       <password>${env.GITHUB_TOKEN}</password>
     </server>
     
-    <!-- Maven Central via Sonatype Central -->
+    <!-- Maven Central -->
     <server>
       <id>central</id>
       <username>${env.CENTRAL_USERNAME}</username>
       <password>${env.CENTRAL_TOKEN}</password>
     </server>
   </servers>
-  
-  <profiles>
-    <profile>
-      <id>github</id>
-      <repositories>
-        <repository>
-          <id>central</id>
-          <url>https://repo1.maven.org/maven2</url>
-        </repository>
-        <repository>
-          <id>github</id>
-          <url>https://maven.pkg.github.com/doanngocthanh/DevhubSDK</url>
-          <snapshots>
-            <enabled>true</enabled>
-          </snapshots>
-        </repository>
-      </repositories>
-    </profile>
-  </profiles>
-  
-  <activeProfiles>
-    <activeProfile>github</activeProfile>
-  </activeProfiles>
 </settings>
