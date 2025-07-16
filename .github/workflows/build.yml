@@ -1,9 +1,11 @@
-name: Build & Verify SDK
+name: Build & Test & Publish SDK
 
 on:
   push:
     branches: [ main ]
   pull_request:
+  release:
+    types: [published]
 
 jobs:
   build:
@@ -19,8 +21,103 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+
     - name: Build with Maven
-      run: mvn clean install
+      run: mvn clean compile
+
+    - name: Run tests
+      run: mvn test
+
+    - name: Package
+      run: mvn package -DskipTests
 
     - name: Verify JAR built
       run: ls -lh target/*.jar
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: jar-files
+        path: target/*.jar
+
+  # Publish to GitHub Packages (cho SNAPSHOT versions)
+  publish-github:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Set up Java for GitHub Packages
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+
+    - name: Set SNAPSHOT version
+      run: |
+        mvn versions:set -DnewVersion=1.0.0-SNAPSHOT
+        mvn versions:commit
+
+    - name: Publish SNAPSHOT to GitHub Packages
+      run: mvn clean deploy -DskipTests
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Publish to Maven Central (chỉ khi release)
+  publish-central:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'release'
+    permissions:
+      contents: read
+
+    steps:
+    - name: Check out code
+      uses: actions/checkout@v3
+
+    - name: Set up Java for Maven Central
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Cache Maven dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.m2
+        key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+        restore-keys: ${{ runner.os }}-m2
+
+    - name: Get version from tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+    - name: Set release version
+      run: |
+        mvn versions:set -DnewVersion=${{ steps.get_version.outputs.VERSION }}
+        mvn versions:commit
+
+    - name: Build and publish to Maven Central
+      run: mvn clean deploy -DskipTests
+      env:
+        CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+        CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}

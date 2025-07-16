@@ -42,22 +42,53 @@ DevHub SDK là một thư viện Java mạnh mẽ được thiết kế để x�
 
 ## 📦 Cài đặt
 
-### Maven
-
-Thêm dependency vào `pom.xml`:
+### Maven Central (Stable releases)
 
 ```xml
 <dependency>
-    <groupId>devhub.io.vn</groupId>
+    <groupId>io.github.doanngocthanh</groupId>
     <artifactId>devhub-sdk</artifactId>
-    <version>0.1.0</version>
+    <version>1.0.0</version>
+</dependency>
+```
+
+### GitHub Packages (SNAPSHOT versions)
+
+Thêm repository vào `pom.xml`:
+
+```xml
+<repositories>
+    <repository>
+        <id>github</id>
+        <name>GitHub Packages</name>
+        <url>https://maven.pkg.github.com/doanngocthanh/DevhubSDK</url>
+    </repository>
+</repositories>
+
+<dependency>
+    <groupId>io.github.doanngocthanh</groupId>
+    <artifactId>devhub-sdk</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```gradle
-implementation 'devhub.io.vn:devhub-sdk:0.1.0'
+// Maven Central
+implementation 'io.github.doanngocthanh:devhub-sdk:1.0.0'
+
+// GitHub Packages
+repositories {
+    maven {
+        url = "https://maven.pkg.github.com/doanngocthanh/DevhubSDK"
+        credentials {
+            username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
+            password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+        }
+    }
+}
+implementation 'io.github.doanngocthanh:devhub-sdk:1.0.0-SNAPSHOT'
 ```
 
 ### Build từ source
