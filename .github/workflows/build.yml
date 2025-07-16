@@ -46,8 +46,8 @@ jobs:
         name: jar-files
         path: target/*.jar
 
-  # Publish to GitHub Packages ONLY (SNAPSHOT versions)
-  publish-github:
+  # Publish SNAPSHOT to GitHub Packages (khi push to main)
+  publish-snapshot:
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -77,24 +77,25 @@ jobs:
         mvn versions:set -DnewVersion=1.0.0-SNAPSHOT
         mvn versions:commit
 
-    - name: Publish SNAPSHOT to GitHub Packages ONLY
+    - name: Publish SNAPSHOT to GitHub Packages
       run: mvn clean deploy -DskipTests -Pgithub-packages -s $GITHUB_WORKSPACE/.github/settings.xml
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Publish to Maven Central ONLY (Release versions)
-  publish-central:
+  # Publish stable version to BOTH GitHub Packages và Maven Central
+  publish-release:
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'release' && startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: read
+      packages: write
 
     steps:
     - name: Check out code
       uses: actions/checkout@v4
 
-    - name: Set up Java for Maven Central
+    - name: Set up Java
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
@@ -111,13 +112,27 @@ jobs:
       id: get_version
       run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
-    - name: Set release version (NO SNAPSHOT)
+    - name: Set release version
       run: |
         mvn versions:set -DnewVersion=${{ steps.get_version.outputs.VERSION }}
         mvn versions:commit
 
-    - name: Build and publish to Maven Central ONLY
+    # BƯỚC 1: Deploy lên GitHub Packages trước
+    - name: 🚀 Deploy to GitHub Packages
+      run: mvn clean deploy -DskipTests -Pgithub-packages -s $GITHUB_WORKSPACE/.github/settings.xml
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # BƯỚC 2: Sau khi GitHub Packages thành công, deploy lên Maven Central
+    - name: 🌟 Deploy to Maven Central
       run: mvn clean deploy -DskipTests -Pmaven-central -s $GITHUB_WORKSPACE/.github/settings.xml
       env:
         CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
         CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
+
+    # BƯỚC 3: Thông báo thành công
+    - name: ✅ Success notification
+      run: |
+        echo "🎉 Successfully deployed v${{ steps.get_version.outputs.VERSION }} to:"
+        echo "📦 GitHub Packages: https://github.com/doanngocthanh/DevhubSDK/packages"
+        echo "🌐 Maven Central: https://central.sonatype.com/artifact/io.github.doanngocthanh/devhub-sdk"
