@@ -54,7 +54,7 @@ DevHub SDK là một thư viện Java mạnh mẽ được thiết kế để x�
 
 ### GitHub Packages (SNAPSHOT versions)
 
-Thêm repository vào `pom.xml`:
+Thêm repository và credentials vào `pom.xml`:
 
 ```xml
 <repositories>
@@ -72,19 +72,32 @@ Thêm repository vào `pom.xml`:
 </dependency>
 ```
 
+**Lưu ý**: GitHub Packages yêu cầu authentication. Thêm vào `~/.m2/settings.xml`:
+
+```xml
+<servers>
+    <server>
+        <id>github</id>
+        <username>your-github-username</username>
+        <password>your-github-personal-access-token</password>
+    </server>
+</servers>
+```
+
 ### Gradle
 
 ```gradle
-// Maven Central
+// Maven Central (stable releases)
 implementation 'io.github.doanngocthanh:devhub-sdk:1.0.0'
 
-// GitHub Packages
+// GitHub Packages (SNAPSHOT versions)
 repositories {
     maven {
-        url = "https://maven.pkg.github.com/doanngocthanh/DevhubSDK"
+        name = "GitHubPackages"
+        url = uri("https://maven.pkg.github.com/doanngocthanh/DevhubSDK")
         credentials {
-            username = project.findProperty("gpr.user") ?: System.getenv("USERNAME")
-            password = project.findProperty("gpr.key") ?: System.getenv("TOKEN")
+            username = project.findProperty("gpr.user") as String? ?: System.getenv("USERNAME")
+            password = project.findProperty("gpr.key") as String? ?: System.getenv("TOKEN")
         }
     }
 }

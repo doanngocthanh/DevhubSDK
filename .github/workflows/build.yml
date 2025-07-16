@@ -99,6 +99,7 @@ jobs:
       with:
         distribution: 'temurin'
         java-version: '17'
+        settings-path: ${{ github.workspace }}
 
     - name: Cache Maven dependencies
       uses: actions/cache@v3
@@ -117,6 +118,10 @@ jobs:
         mvn versions:commit
 
     - name: Build and publish to Maven Central
+      run: mvn clean deploy -DskipTests -s $GITHUB_WORKSPACE/.github/settings.xml
+      env:
+        CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+        CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
       run: mvn clean deploy -DskipTests
       env:
         CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}

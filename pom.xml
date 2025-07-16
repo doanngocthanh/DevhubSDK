@@ -36,11 +36,11 @@
         <url>https://github.com/doanngocthanh/DevhubSDK/tree/main</url>
     </scm>
 
-    <!-- Distribution cho cả GitHub Packages và Maven Central -->
+    <!-- Distribution Management cho Central Publishing API -->
     <distributionManagement>
         <repository>
             <id>central</id>
-            <name>Maven Central</name>
+            <name>Central Repository</name>
             <url>https://central.sonatype.com/api/v1/publisher/upload</url>
         </repository>
         <snapshotRepository>
@@ -138,11 +138,12 @@
             <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
-                <version>0.4.0</version>
+                <version>0.6.0</version>
                 <extensions>true</extensions>
                 <configuration>
                     <publishingServerId>central</publishingServerId>
-                    <tokenAuth>true</tokenAuth>
+                    <autoPublish>true</autoPublish>
+                    <waitUntil>published</waitUntil>
                 </configuration>
             </plugin>
         </plugins>
