@@ -122,7 +122,7 @@
         </plugins>
     </build>
 
-    <profiles>
+      <profiles>
         <!-- Profile cho GitHub Packages -->
         <profile>
             <id>github-packages</id>
@@ -158,10 +158,12 @@
                             <publishingServerId>central</publishingServerId>
                             <tokenAuth>true</tokenAuth>
                             <autoPublish>true</autoPublish>
+                            <waitUntil>validated</waitUntil>
                         </configuration>
                     </plugin>
                 </plugins>
             </build>
         </profile>
+    </profiles>
     </profiles>
 </project>
