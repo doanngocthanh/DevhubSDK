@@ -6,6 +6,12 @@ on:
   pull_request:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 1.0.0)'
+        required: true
+        default: '1.0.0'
 
 jobs:
   build:
@@ -77,24 +83,26 @@ jobs:
         mvn versions:set -DnewVersion=1.0.0-SNAPSHOT
         mvn versions:commit
 
-    - name: Publish SNAPSHOT to GitHub Packages
+    - name: Publish SNAPSHOT to GitHub Packages ONLY
       run: mvn clean deploy -DskipTests -Pgithub-packages -s $GITHUB_WORKSPACE/.github/settings.xml
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Publish stable version to BOTH GitHub Packages và Maven Central
+  # Publish to Maven Central (chỉ khi có release hoặc manual trigger)
   publish-maven:
     needs: build
     runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'release' || 
+      github.event_name == 'workflow_dispatch'
     permissions:
       contents: read
-      packages: write
 
     steps:
     - name: Check out code
       uses: actions/checkout@v4
 
-    - name: Set up Java
+    - name: Set up Java for Maven Central
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
@@ -107,31 +115,35 @@ jobs:
         key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
         restore-keys: ${{ runner.os }}-m2
 
-    - name: Get version from tag
+    - name: Determine version
       id: get_version
-      run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      run: |
+        if [[ "${{ github.event_name }}" == "release" ]]; then
+          VERSION=${GITHUB_REF#refs/tags/v}
+        elif [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          VERSION=${{ github.event.inputs.version }}
+        else
+          VERSION="1.0.0"
+        fi
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "Using version: $VERSION"
 
-    - name: Set release version
+    - name: Set release version (NO SNAPSHOT)
       run: |
         mvn versions:set -DnewVersion=${{ steps.get_version.outputs.VERSION }}
         mvn versions:commit
+        echo "Set version to: ${{ steps.get_version.outputs.VERSION }}"
 
-    # BƯỚC 1: Deploy lên GitHub Packages trước
-    - name: 🚀 Deploy to GitHub Packages
-      run: mvn clean deploy -DskipTests -Pgithub-packages -s $GITHUB_WORKSPACE/.github/settings.xml
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Build artifacts
+      run: mvn clean package -DskipTests
 
-    # BƯỚC 2: Sau khi GitHub Packages thành công, deploy lên Maven Central
-    - name: 🌟 Deploy to Maven Central
-      run: mvn clean deploy -DskipTests -Pmaven-central -s $GITHUB_WORKSPACE/.github/settings.xml
+    - name: 🌟 Deploy to Maven Central ONLY
+      run: mvn deploy -DskipTests -Pmaven-central -s $GITHUB_WORKSPACE/.github/settings.xml
       env:
         CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
         CENTRAL_TOKEN: ${{ secrets.CENTRAL_TOKEN }}
 
-    # BƯỚC 3: Thông báo thành công
     - name: ✅ Success notification
       run: |
-        echo "🎉 Successfully deployed v${{ steps.get_version.outputs.VERSION }} to:"
-        echo "📦 GitHub Packages: https://github.com/doanngocthanh/DevhubSDK/packages"
-        echo "🌐 Maven Central: https://central.sonatype.com/artifact/io.github.doanngocthanh/devhub-sdk"
+        echo "🎉 Successfully deployed v${{ steps.get_version.outputs.VERSION }} to Maven Central!"
+        echo "🌐 Check: https://central.sonatype.com/artifact/io.github.doanngocthanh/devhub-sdk"
