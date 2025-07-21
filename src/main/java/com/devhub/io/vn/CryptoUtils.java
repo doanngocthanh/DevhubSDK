@@ -1,13 +1,13 @@
-package security;
+package com.devhub.io.vn;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Base64;
+import java.util.UUID;
 
 public class CryptoUtils {
 
-	private static final String SECRET_KEY = "DevhubTeam456789";
-
+	private static final String SECRET_KEY = DevhubSDK.scriptID;
 	public static String encrypt(String plainText) {
 		try {
 			SecretKeySpec key = new SecretKeySpec(SECRET_KEY.getBytes(), "AES");

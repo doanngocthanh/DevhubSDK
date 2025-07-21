@@ -1,4 +1,4 @@
-package config;
+package com.devhub.io.vn;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -7,7 +7,6 @@ public class FlexibleConfig {
     // Bộ nhớ tạm cấu hình (runtime)
     private static final Map<String, String> configMap = new HashMap<>();
 
-    // Giá trị mặc định
     static {
     	configMap.put("HOST", "https://script.google.com/macros");
     	configMap.put("PATH", "/s/");

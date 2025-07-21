@@ -1,4 +1,4 @@
-package security.google.app.script;
+package security.license;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -10,10 +10,10 @@ import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
+import com.devhub.io.vn.FlexibleConfig;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import config.FlexibleConfig;
 
 // Apache HttpClient
 import org.apache.http.HttpResponse;
@@ -44,8 +44,8 @@ import okhttp3.Response;
 public class LicenseValidator {
 
 	// Cấu hình
-	private static final String GAS_WEB_APP_URL =  FlexibleConfig.get("GAS_WEB_APP_URL");//"https://script.google.com/macros/s/..../exec";
-	private static final String SECRET_KEY =FlexibleConfig.get("SECRET_KEY");;// "your-secret-key-here-change-this";
+	private static final String GAS_WEB_APP_URL =  FlexibleConfig.get("GAS_WEB_APP_URL");
+	private static final String SECRET_KEY =FlexibleConfig.get("SECRET_KEY");
 	private static final int TIMEOUT_SECONDS = 30;
 	private static final int MAX_RETRIES = 3;
 
